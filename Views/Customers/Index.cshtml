@@ -1,0 +1,86 @@
+﻿@model IEnumerable<LibApp.Models.Customer>
+
+@{
+    ViewBag.Title = "Customers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@* jQuery tutorial - https://www.impressivewebs.com/jquery-tutorial-for-beginners/*@
+
+<h2>Customers</h2>
+<a class="btn btn-primary" asp-action="New">New Customer</a>
+
+<table id="customers" class="table table-hover">
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Membership type</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+@section Scripts
+    {
+    <script>
+        $(document).ready(function () {
+            $('#customers').DataTable({
+                ajax: {
+                    url: "api/customers",
+                    dataSrc: ""
+                },
+                columns: [
+                    {
+                        data: "name",
+                        render: function (data, type, customer) {
+                            return "<a href='customers/edit/" + customer.id + "'>" + customer.name + "</a>";
+                        }
+                    },
+                    {
+                        data: "membershipType.name"
+                    },
+                    {
+                        data: "id",
+                        render: function (data) {
+                            return "<button class='btn btn-secondary js-delete' data-customer-id=" + data + ">Delete</button>";
+                        }
+                    }
+                ]
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $("#customers").on("click", ".js-delete", function () {
+                var button = $(this);
+                bootbox.confirm({
+                    message: 'Delete customer?',
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Cancel'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Confirm'
+                        }
+                    },
+                    callback: function (result) {
+                        if (result)
+                        {
+                            console.log("ID:" + button.attr("data-customer-id"));
+                            $.ajax({
+                                url: "/api/customers/" + button.attr("data-customer-id"),
+                                method: "DELETE",
+                                success: function () {
+                                    button.parents("tr").remove();
+                                }
+                            });
+                        }
+                     }
+                });
+            });
+        });
+    </script>
+}

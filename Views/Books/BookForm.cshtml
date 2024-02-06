@@ -1,0 +1,51 @@
+﻿@model LibApp.ViewModels.BookFormViewModel
+
+@{
+    ViewBag.Title = Model.Title;
+}
+
+<h2>@Model.Title</h2>
+
+@using (Html.BeginForm("Save", "Books", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Book.Title, new { @class = "control-label" })
+        @Html.TextBoxFor(m => m.Book.Title, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Book.Title, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Book.Author, new { @class = "control-label" })
+        @Html.TextBoxFor(m => m.Book.Author, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Book.Author, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Book.GenreId, new { @class = "control-label" })
+        @Html.DropDownListFor(m => m.Book.GenreId, new SelectList(Model.Genres, "Id", "Name"), "Choose Genre", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Book.GenreId, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Book.ReleaseDate, new { @class = "control-label" })
+        @Html.TextBoxFor(m => m.Book.ReleaseDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
+        @Html.ValidationMessageFor(m => m.Book.ReleaseDate, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Book.NumberInStock, new { @class = "control-label" })
+        @Html.TextBoxFor(m => m.Book.NumberInStock, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Book.NumberInStock, "", new { @class = "text-danger" })
+    </div>
+
+    @Html.HiddenFor(m => m.Book.Id)
+    <button type="submit" class="btn btn-primary">Save</button>
+}
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}
+
