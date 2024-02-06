@@ -2,9 +2,7 @@
 using LibApp.Data;
 using LibApp.Models;
 using LibApp.Dtos;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibApp.Controllers.API
@@ -13,7 +11,11 @@ namespace LibApp.Controllers.API
     [ApiController]
     public class CustomersController : ControllerBase
     {
-        public CustomersController(ApplicationDbContext context, IMapper mapper) {
+        private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
+
+        public CustomersController(ApplicationDbContext context, IMapper mapper)
+        {
             _context = context;
             _mapper = mapper;
         }
@@ -27,21 +29,24 @@ namespace LibApp.Controllers.API
                 .ToList()
                 .Select(_mapper.Map<Customer, CustomerDto>);
 
-            return Ok(customers); 
-        }        
-        
+            return Ok(customers);
+        }
+
         // GET /api/customers/{id}
         [HttpGet("{id}", Name = "GetCustomer")]
         public IActionResult GetCustomer(int id)
-        { 
-            var customer = _mapper.Map<CustomerDto>(_context.Customers.SingleOrDefault(c => c.Id == id)); 
+        {
+            var customerInDb = _context.Customers
+                .Include(c => c.MembershipType)
+                .SingleOrDefault(c => c.Id == id);
 
-            if (customer == null)
+            if (customerInDb == null)
             {
                 return NotFound();
             }
 
-            return Ok(customer);
+            var customerDto = _mapper.Map<CustomerDto>(customerInDb);
+            return Ok(customerDto);
         }
 
         // POST /api/customers
@@ -53,10 +58,12 @@ namespace LibApp.Controllers.API
                 return BadRequest();
             }
 
-            _context.Customers.Add(_mapper.Map<Customer>(customerDto));
+            var customer = _mapper.Map<Customer>(customerDto);
+            _context.Customers.Add(customer);
             _context.SaveChanges();
 
-            return CreatedAtRoute(nameof(GetCustomer), new { id = customerDto.Id});
+            customerDto.Id = customer.Id;
+            return CreatedAtRoute(nameof(GetCustomer), new { id = customer.Id }, customerDto);
         }
 
         // PUT /api/customers/{id}
@@ -69,13 +76,17 @@ namespace LibApp.Controllers.API
             }
 
             var customerInDb = _context.Customers.SingleOrDefault(c => c.Id == id);
-            _mapper.Map(customerDto, customerInDb);
+            if (customerInDb == null)
+            {
+                return NotFound();
+            }
 
+            _mapper.Map(customerDto, customerInDb);
             _context.SaveChanges();
-            return Ok(customerInDb);
+            return Ok(customerDto);
         }
 
-        // DELETE /api/customer/{id}
+        // DELETE /api/customers/{id}
         [HttpDelete("{id}")]
         public IActionResult DeleteCustomer(int id)
         {
@@ -84,14 +95,10 @@ namespace LibApp.Controllers.API
             {
                 return NotFound();
             }
-            _context.Remove(customerInDb);
+
+            _context.Customers.Remove(customerInDb);
             _context.SaveChanges();
-
-            return Ok(customerInDb);
+            return Ok();
         }
-
-
-        private ApplicationDbContext _context;
-        private IMapper _mapper;
     }
 }
